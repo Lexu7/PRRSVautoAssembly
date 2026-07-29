@@ -2,3 +2,4 @@
 *_prrsv_assembly/
 __pycache__/
 *.py[cod]
+.DS_Store

@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Fix GLIBCXX / conda runtime
-export LD_LIBRARY_PATH="/ifs1/Software/Miniconda3/lib:${LD_LIBRARY_PATH:-}"
+# Use the active Conda environment when available; otherwise discover Conda's base path.
+CONDA_LIB=""
+if [[ -n "${CONDA_PREFIX:-}" && -d "${CONDA_PREFIX}/lib" ]]; then
+  CONDA_LIB="${CONDA_PREFIX}/lib"
+elif command -v conda >/dev/null 2>&1; then
+  CONDA_BASE="$(conda info --base 2>/dev/null || true)"
+  if [[ -n "$CONDA_BASE" && -d "${CONDA_BASE}/lib" ]]; then
+    CONDA_LIB="${CONDA_BASE}/lib"
+  fi
+fi
+if [[ -n "$CONDA_LIB" ]]; then
+  export LD_LIBRARY_PATH="${CONDA_LIB}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+fi
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 log() { echo "[$(date -Is)] $*"; }
@@ -33,7 +44,6 @@ DB_FULL="${SCRIPT_DIR}/references/prrsv_blast"
 REF_FASTA="${SCRIPT_DIR}/references/prrsv_refs.fasta"
 
 # Tools
-CANU_BIN="/ifs1/Software/canu-2.2/bin/canu"
 FASTP_BIN="fastp"
 BLASTN_BIN="blastn"
 MINIMAP2_BIN="minimap2"
@@ -133,7 +143,7 @@ command -v "$SAMTOOLS_BIN" >/dev/null || die "Missing tool: $SAMTOOLS_BIN"
 command -v "$BCFTOOLS_BIN" >/dev/null || die "Missing tool: $BCFTOOLS_BIN"
 command -v "$SEQKIT_BIN" >/dev/null || die "Missing tool: $SEQKIT_BIN"
 command -v "$PYTHON_BIN" >/dev/null || die "Missing tool: $PYTHON_BIN"
-[[ -x "$CANU_BIN" ]] || die "Canu not executable: $CANU_BIN"
+command -v canu >/dev/null || die "Missing tool: canu"
 [[ -s "$REF_FASTA" ]] || die "Missing REF_FASTA: $REF_FASTA"
 ls "${DB_FULL}".n* >/dev/null 2>&1 || die "Missing BLAST db: $DB_FULL"
 [[ -s "${PY_DIR}/select_best_reference.py" ]] || die "Missing ${PY_DIR}/select_best_reference.py"
@@ -183,7 +193,7 @@ log "[2] Canu de novo..."
 CANU_OUTDIR="${WORKDIR}/${SAMPLE}.canu30"
 CANU_PREFIX="$SAMPLE"
 set +e
-$CANU_BIN -nanopore "$TRIMMED_FASTQ" minOverlapLength=30 \
+canu -nanopore "$TRIMMED_FASTQ" minOverlapLength=30 \
   -d "$CANU_OUTDIR" -p "$CANU_PREFIX" genomeSize="$GENOME_SIZE" \
   > "${WORKDIR}/${SAMPLE}.canu.log" 2>&1
 CANU_EXIT=$?

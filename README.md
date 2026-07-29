@@ -26,7 +26,7 @@ When a diagnostic best-reference-filled FASTA is produced, zero-depth consensus 
 - seqkit
 - Python 3
 
-The default Canu path is `/ifs1/Software/canu-2.2/bin/canu`. Edit `CANU_BIN` in `PRRSVAssembly.sh` if needed.
+Create the Conda environment described in [REQUIREMENTS.md](REQUIREMENTS.md) before running the workflow.
 
 ## Run
 

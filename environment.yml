@@ -1,0 +1,14 @@
+name: prrsv-assembly
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - canu=2.2
+  - fastp
+  - blast
+  - minimap2
+  - samtools
+  - bcftools
+  - seqkit
+  - pytest
